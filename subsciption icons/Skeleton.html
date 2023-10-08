@@ -1,0 +1,314 @@
+<html>
+  <head>
+    <title>OnlyMovie</title>
+    <link rel="stylesheet" href="style1.css">
+  </head>
+  <body>
+    <div class="container">
+      <div class="form-container">
+        <h1>Sign-Up for ANGELA-TV</h1>
+        <div style="display:flex; align-items: center;">
+          <label style="margin-right: 10px;">Name</label>
+          <input type="text" id="name">
+        </div>
+        <div style="display:flex; align-items: center;">
+          <label style="margin-right: 10px;">Email</label>
+          <input type="text" id="email">
+        </div>
+        <details>
+          <summary>Choose your Plan</summary>
+          <div id="content">
+            <div>
+              <input type="radio" name="radio_type" id="mobile" value="Mobile">
+              <label for="mobile">Mobile</label>
+              <div class="additional-content">
+                <p>P400/monthly</p>
+                <img src="Basic.png">
+              </div>
+            </div>
+            <div>
+              <input type="radio" name="radio_type" id="basic" value="Basic">
+              <label for="basic">Basic</label>
+              <div class="additional-content">
+                <p>P150/monthly</p>
+                <img src="Basic.png">
+              </div>
+            </div>
+            <div>
+              <input type="radio" name="radio_type" id="standard" value="Standard">
+              <label for="standard">Standard</label>
+              <div class="additional-content">
+                <p>P500/monthly</p>
+                <img src="Standard.png">
+              </div>
+            </div>
+            <div>
+              <input type="radio" name="radio_type" id="premium" value="Premium">
+              <label for="premium">Premium</label>
+              <div class="additional-content">
+                <p>P600/monthly</p>
+                <img src="Premium.png">
+              </div>
+            </div>
+            <div style="display:flex">
+              <label for="payment" style="margin-right: 5px;">Payment Option</label>
+              <img id="cash" src="cash.png" alt="cash" width="60px" height="50px" onclick="CashChosen()">
+              <img id="credit" src="credit.png" alt="credit" width="60px" height="50px" onclick="CreditChosen()">
+              <input type="text" id="ccnum" maxlength="16" disabled="true">
+            </div>
+            <div>
+              <label for="addUser">Additional Users:</label>
+              <input type="number" id="addUser" value="0" min="0"><br><br>
+              <label for="resolutionType">Resolution Type:</label>
+              <input type="radio" id="720" name="radio_resolution" value="720p">
+              <label for="720">720p</label>
+              <input type="radio" id="1080" name="radio_resolution" value="1080p">
+              <label for="1080">1080p</label>
+              <input type="radio" id="4K" name="radio_resolution" value="4K">
+              <label for="4K">4K</label>
+            </div>
+          </div>
+        </details>
+        <button id="Signup">Sign-up</button>
+      </div>
+      <div id="output">
+        <p id="Name"></p>
+        <p id="Email"></p>
+        <p id="paymentMethod"></p>
+        <p id="subscription"></p>
+        <p id="TMF"></p>
+        <div id="Dimg"></div>
+        <p id="userNum"></p>
+        <p id="dateNextPayment"></p>
+      </div>
+    </div>
+
+    <script>
+      // Boolean to determine the picked payment method
+      let IsCashChosen = false;
+    
+      const radioButtons = document.querySelectorAll('input[type="radio"]');
+      radioButtons.forEach(radioButton => {
+        radioButton.addEventListener('change', () => {
+          document.querySelectorAll('.additional-content').forEach(content => {
+            content.style.display = 'none';
+          });
+    
+          if (radioButton.checked) {
+            radioButton.nextElementSibling.nextElementSibling.style.display = 'block';
+          }
+        });
+      });
+    
+      document.getElementById("Signup").addEventListener("click", () => {
+        
+        is_valid = true;
+        const name = document.getElementById("name").value;
+        const email = document.getElementById("email").value;
+
+        const name_should = /^[A-Za-z\s]+$/;
+        const email_contains = /^([A-Za-z0-9_\-\.])+\@([A-Za-z0-9_\-\.])+\.([A-Za-z]{2,4})$/;
+
+        // Validation for Name
+        if (name == ""){
+            alert("Please enter your name!");
+            return false;
+        }else if (!name_should.test(name)) {
+            alert("Name should contain only alphabet characters!")
+            return false;
+        }
+        
+        // Validation for Email
+        if (!email_contains.test(email)){
+            alert("Invalid email address!")
+            return false;
+        }
+    
+        // Validation for Plan
+        const plan = document.getElementsByName("radio_type");
+        let planPicked = "";
+        let planValidated = false;
+        plan.forEach((plans) => {
+          if (plans.checked) {
+            planPicked = plans.value;
+            planValidated = true;
+          }
+        });
+        if (!planValidated) {
+          alert("Please choose a plan.");
+          return;
+        }
+    
+        // Payment Method
+        let paymentMethod = "";
+        if (IsCashChosen) {
+          paymentMethod = "Cash";
+        } else {
+          const CreditNum = document.getElementById("ccnum").value.trim();
+          if (CreditNum === "") {
+            alert("Please choose a payment option.");
+            alert("To validate payment option when card is chosen, make sure to type your credit card number in the field.");
+            return;
+          }
+          if (!/^\d{16}$/.test(CreditNum)) {
+            alert("Credit card number should be 16 digits with no non-digit characters.");
+            return;
+          }
+          paymentMethod = `Credit Card num.${CreditNum}`;
+        }
+    
+        // Calls the function that creates the images
+        CreateImage(planPicked);
+    
+        // Default number of users for each plan
+        const defaultUsers = {
+          Mobile: 1,
+          Basic: 2,
+          Standard: 3,
+          Premium: 5
+        };
+    
+        // Additional Users
+        const additionalUsers = parseInt(document.getElementById("addUser").value);
+        const totalUsers = defaultUsers[planPicked] + additionalUsers;
+    
+        // Total price
+        const userNumPrice = additionalUsers * 60;
+        const resolutionType = document.querySelector('input[name="radio_resolution"]:checked');
+        if (!resolutionType) {
+          alert("Please choose a resolution type.");
+          return;
+        }
+        const resolutionPriceValue = resolutionPrice();
+        const subscriptionPriceValue = subscriptionPrice(planPicked);
+        const totalMonthlyFee = resolutionPriceValue + subscriptionPriceValue + userNumPrice;
+        document.getElementById("TMF").textContent = `The total monthly fee is ${totalMonthlyFee}`;
+    
+        // Current Date
+        const currentDate = new Date();
+        const date = currentDate.getDate();
+        const month = (currentDate.getMonth() + 2);
+        const year = currentDate.getFullYear();
+        const monthNames = [
+          "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"
+        ];
+        const format_Month = monthNames[month - 1];
+        const payDate = `${format_Month} ${date}, ${year}`;
+        document.getElementById("dateNextPayment").textContent = `The date of your next payment: ${payDate}`;
+    
+        // Display user information
+
+        document.getElementById("Name").textContent = `Name: ${name}`;
+        document.getElementById("Name").style.fontSize = "16px";
+        document.getElementById("Name").style.color = "#333";
+        document.getElementById("Name").style.margin = "0"; 
+        document.getElementById("Name").style.padding = "10px"; 
+        document.getElementById("Name").style.border = "1px solid #ccc"; 
+        document.getElementById("Name").style.borderRadius = "10px"; 
+    
+
+        document.getElementById("Email").textContent = `Email: ${email}`;
+        document.getElementById("Email").style.fontSize = "16px";
+        document.getElementById("Email").style.color = "#333";
+        document.getElementById("Email").style.margin = "10px 0";
+        document.getElementById("Email").style.padding = "10px";
+        document.getElementById("Email").style.border = "1px solid #ccc";
+        document.getElementById("Email").style.borderRadius = "10px";
+
+        document.getElementById("paymentMethod").textContent = `Payment Method: ${paymentMethod}`;
+        document.getElementById("paymentMethod").style.fontSize = "16px";
+        document.getElementById("paymentMethod").style.color = "#333";
+        document.getElementById("paymentMethod").style.margin = "10px 0";
+        document.getElementById("paymentMethod").style.padding = "10px";
+        document.getElementById("paymentMethod").style.border = "1px solid #ccc";
+        document.getElementById("paymentMethod").style.borderRadius = "10px";
+
+        document.getElementById("subscription").textContent = `Your plan is: ${planPicked}`;
+        document.getElementById("subscription").style.fontSize = "16px";
+        document.getElementById("subscription").style.color = "#333";
+        document.getElementById("subscription").style.margin = "10px 0";
+        document.getElementById("subscription").style.padding = "10px";
+        document.getElementById("subscription").style.border = "1px solid #ccc";
+        document.getElementById("subscription").style.borderRadius = "10px";
+
+        document.getElementById("userNum").textContent = `The number of users is: ${totalUsers}`;
+        document.getElementById("userNum").style.fontSize = "16px";
+        document.getElementById("userNum").style.color = "#333";
+        document.getElementById("userNum").style.margin = "10px 0";
+        document.getElementById("userNum").style.padding = "10px";
+        document.getElementById("userNum").style.border = "1px solid #ccc";
+        document.getElementById("userNum").style.borderRadius = "10px";
+      });
+    
+      function resolutionPrice() {
+        // Resolution price
+        const res = document.getElementsByName("radio_resolution");
+        let resPrice = 0;
+        res.forEach((resolutions) => {
+          if (resolutions.checked) {
+            if (resolutions.value == "1080p") {
+              resPrice = 30;
+            } else if (resolutions.value == "4K") {
+              resPrice = 80;
+            } else {
+              resPrice = 0;
+            }
+          }
+        });
+        return resPrice;
+      }
+    
+      function subscriptionPrice(plan) {
+        let subPrice = 0;
+        switch (plan) {
+          case "Mobile":
+            subPrice = 400;
+            break;
+          case "Basic":
+            subPrice = 150;
+            break;
+          case "Standard":
+            subPrice = 500;
+            break;
+          case "Premium":
+            subPrice = 600;
+            break;
+        }
+        return subPrice;
+      }
+    
+      function CashChosen() {
+        const img = document.getElementById("cash");
+        img.style.border = "5px solid black";
+        const otherimg = document.getElementById("credit");
+        otherimg.style.border = null;
+        document.getElementById("ccnum").disabled = true;
+        IsCashChosen = true;
+      }
+    
+      function CreditChosen() {
+        const img = document.getElementById("credit");
+        img.style.border = "5px solid black";
+        const otherimg = document.getElementById("cash");
+        otherimg.style.border = null;
+        document.getElementById("ccnum").disabled = false;
+        IsCashChosen = false;
+      }
+    
+      function CreateImage(pickedPlan) {
+        const imageoutput = document.getElementById("Dimg");
+        imageoutput.innerHTML = ""; // Clear previous images
+        switch (pickedPlan) {
+          case "Mobile":
+          case "Basic":
+          case "Standard":
+          case "Premium":
+            var img = document.createElement("img");
+            img.src = `${pickedPlan}.png`;
+            imageoutput.appendChild(img);
+            break;
+        }
+      }
+    </script>    
+  </body>
+</html>
